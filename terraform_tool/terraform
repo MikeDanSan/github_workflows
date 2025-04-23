@@ -1,0 +1,45 @@
+name: Ensure Terraform
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  ensure-terraform:
+    runs-on: ubuntu-latest
+
+    env:
+      TERRAFORM_VERSION: 1.5.6 # Set the desired Terraform version here
+
+    steps:
+      # Step 1: Check out the repository
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # Step 2: Check if Terraform is installed
+      - name: Check if Terraform is installed
+        id: check-terraform
+        run: |
+          if command -v terraform >/dev/null 2>&1; then
+            echo "Terraform is already installed."
+            echo "terraform_installed=true" >> $GITHUB_ENV
+          else
+            echo "Terraform is not installed."
+            echo "terraform_installed=false" >> $GITHUB_ENV
+          fi
+
+      # Step 3: Install Terraform if not installed
+      - name: Install Terraform
+        if: env.terraform_installed == 'false'
+        run: |
+          echo "Installing Terraform version $TERRAFORM_VERSION..."
+          curl -fsSL https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip -o terraform.zip
+          unzip terraform.zip
+          sudo mv terraform /usr/local/bin/
+          terraform -version
+
+      # Step 4: Verify Terraform installation
+      - name: Verify Terraform installation
+        run: terraform -version
